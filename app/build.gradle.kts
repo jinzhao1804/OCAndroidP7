@@ -71,6 +71,25 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
+
+
+    // Mockito for mocking objects
+    testImplementation("org.mockito:mockito-core:4.2.0")
+
+    // Mockito-Kotlin for easier mocking with Kotlin
+    testImplementation("org.mockito.kotlin:mockito-kotlin:4.0.0")
+
+    // Kotlin Coroutines test dependencies for suspending functions
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+
+    // AndroidX Test for JUnit integration
+    testImplementation("androidx.test.ext:junit:1.2.1")
+
+    // For mocking suspending functions (inline mocking)
+    testImplementation("org.mockito:mockito-inline:4.2.0")
+
+    // Optional: Use this for tests that need the `runBlocking` coroutine builder to work seamlessly.
+    testImplementation("org.jetbrains.kotlin:kotlin-test:1.9.0")
 }
 
 kapt {
