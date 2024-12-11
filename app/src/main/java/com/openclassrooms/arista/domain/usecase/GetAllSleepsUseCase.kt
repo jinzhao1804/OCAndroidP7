@@ -5,7 +5,14 @@ import com.openclassrooms.arista.domain.model.Sleep
 import javax.inject.Inject
 
 class GetAllSleepsUseCase @Inject constructor(private val sleepRepository: SleepRepository) {
+
     suspend fun execute(): List<Sleep> {
-        return sleepRepository.getAllSleeps()
+        return try {
+            // Attempt to get all sleeps from the repository
+            sleepRepository.getAllSleeps()
+        } catch (e: Exception) {
+            // Handle the error: log it or rethrow with a custom message
+            throw Exception("Error fetching sleeps: ${e.message}", e)
+        }
     }
 }

@@ -5,8 +5,9 @@ import com.openclassrooms.arista.data.entity.UserDto
 import com.openclassrooms.arista.domain.model.User
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import javax.inject.Inject
 
-class UserRepository(private val userDao: UserDtoDao) {
+class UserRepository @Inject constructor (private val userDao: UserDtoDao) {
 
     // Get the current user
     suspend fun getUser(): Flow<UserDto> {
