@@ -33,23 +33,24 @@ android {
         // Flag to enable support for the new language APIs
         isCoreLibraryDesugaringEnabled = true
 
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_19
+        targetCompatibility = JavaVersion.VERSION_19
     }
 
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "19"
     }
 
     buildFeatures {
         viewBinding = true
     }
+
 }
 
 dependencies {
     // Core KTX and Desugaring
     implementation("androidx.core:core-ktx:1.15.0") // Core extensions
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.3") // Core library desugaring
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4") // Core library desugaring
 
     // Room dependencies
     implementation("androidx.room:room-runtime:2.6.1")
@@ -76,6 +77,8 @@ dependencies {
     // Mockito for mocking objects
     testImplementation("org.mockito:mockito-core:4.2.0")
 
+    testImplementation("io.mockk:mockk:1.13.4")
+
     // Mockito-Kotlin for easier mocking with Kotlin
     testImplementation("org.mockito.kotlin:mockito-kotlin:4.0.0")
 
@@ -90,10 +93,23 @@ dependencies {
 
     // Optional: Use this for tests that need the `runBlocking` coroutine builder to work seamlessly.
     testImplementation("org.jetbrains.kotlin:kotlin-test:1.9.0")
+
 }
 
 kapt {
     correctErrorTypes = true
-}
+    javacOptions {
+        option("--add-exports", "jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED")
+    }
 
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+        kotlinOptions {
+            jvmTarget = "19"
+            freeCompilerArgs = freeCompilerArgs + listOf(
+                "-Xadd-exports=jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED"
+            )
+        }
+    }
+
+}
 

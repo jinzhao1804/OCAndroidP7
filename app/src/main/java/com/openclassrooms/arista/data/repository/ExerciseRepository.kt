@@ -5,7 +5,7 @@ import com.openclassrooms.arista.domain.model.Exercise
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
-class ExerciseRepository @Inject constructor(private val exerciseDao: ExerciseDtoDao) {
+open class ExerciseRepository @Inject constructor(private val exerciseDao: ExerciseDtoDao) {
 
     // Get all exercises
     suspend fun getAllExercises(): List<Exercise> {
