@@ -1,75 +1,54 @@
-package com.openclassrooms.arista.domain.usecase
+package com.openclassrooms.arista
 
+import com.openclassrooms.arista.data.dao.UserDtoDao
 import com.openclassrooms.arista.data.entity.UserDto
 import com.openclassrooms.arista.data.repository.UserRepository
 import com.openclassrooms.arista.domain.model.User
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.runBlocking
-import org.junit.After
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.mockito.Mock
-import org.mockito.Mockito
-import org.mockito.MockitoAnnotations
-import org.junit.Assert.*
-import org.mockito.junit.MockitoJUnitRunner
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.`when`
 
-@RunWith(MockitoJUnitRunner::class)
-class GetUserUseCaseTest {
+class UserRepositoryTest {
 
-    @Mock
     private lateinit var userRepository: UserRepository
-
-    private lateinit var getUserUseCase: GetUserUsecase
+    private lateinit var mockUserDao: UserDtoDao
 
     @Before
     fun setUp() {
-        MockitoAnnotations.initMocks(this) // Initializes mock objects
-        getUserUseCase = GetUserUsecase(userRepository)
-    }
-
-    @After
-    fun tearDown() {
-        Mockito.framework().clearInlineMocks() // Clean up after tests
+        mockUserDao = mock(UserDtoDao::class.java)
+        userRepository = UserRepository(mockUserDao)
     }
 
     @Test
-    fun `when repository returns user, use case should return the user`() = runBlocking {
-        // Arrange: Prepare the fake UserDto to be returned by the repository
-        val fakeUserDto = UserDto(
-            name = "John Doe",
-            email = "john.doe@example.com"
-        )
+    fun `getUser should return Flow of UserDto`() = runTest {
+        // Arrange
+        val userDto = UserDto(id = 1, name = "John Doe", email = "john.doe@example.com")
+        `when`(mockUserDao.getCurrentUser()).thenReturn(flowOf(userDto))
 
-        // Mocking the repository to return the flow with the fake user data
-        Mockito.`when`(userRepository.getUser()).thenReturn(flow { emit(fakeUserDto) })
+        // Act
+        val result = userRepository.getUser().first()
 
-        // Act: Call the use case's execute method
-        val result = getUserUseCase.execute()
-
-        // Assert: Verify that the result contains the expected UserDto
-        result.collect { userDto ->
-            assertEquals(fakeUserDto.name, userDto.name)
-            assertEquals(fakeUserDto.email, userDto.email)
-        }
+        // Assert
+        assertEquals(userDto, result)
+        verify(mockUserDao).getCurrentUser()
     }
 
     @Test
-    fun `when repository returns empty user, use case should return empty user`() = runBlocking {
-        // Arrange: Prepare the empty UserDto to be returned by the repository
-        val emptyUserDto = UserDto(name = "", email = "")
+    fun `setUser should call insertUser on UserDtoDao`() = runTest {
+        // Arrange
+        val user = User(name = "Jane Doe", email = "jane.doe@example.com")
+        val userDto = user.toDto()
 
-        // Mocking the repository to return the flow with the empty user data
-        Mockito.`when`(userRepository.getUser()).thenReturn(flow { emit(emptyUserDto) })
+        // Act
+        userRepository.setUser(user)
 
-        // Act: Call the use case's execute method
-        val result = getUserUseCase.execute()
-
-        // Assert: Verify that the result contains the expected empty UserDto
-        result.collect { userDto ->
-            assertEquals(emptyUserDto.name, userDto.name)
-            assertEquals(emptyUserDto.email, userDto.email)
-        }
+        // Assert
+        verify(mockUserDao).insertUser(userDto)
     }
 }
