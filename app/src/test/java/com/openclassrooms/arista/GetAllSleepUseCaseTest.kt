@@ -1,85 +1,59 @@
 package com.openclassrooms.arista
 
-import com.openclassrooms.arista.domain.model.Sleep
-import com.openclassrooms.arista.domain.usecase.GetAllSleepsUseCase
+import com.openclassrooms.arista.data.dao.SleepDtoDao
+import com.openclassrooms.arista.data.entity.SleepDto
 import com.openclassrooms.arista.data.repository.SleepRepository
-import kotlinx.coroutines.runBlocking
-import org.junit.After
+import com.openclassrooms.arista.domain.model.Sleep
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.mockito.Mock
-import org.mockito.Mockito
-import org.mockito.MockitoAnnotations
-import org.junit.Assert.*
-import org.mockito.junit.MockitoJUnitRunner
+import org.mockito.Mockito.*
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 
-@RunWith(MockitoJUnitRunner::class)
-class GetAllSleepUseCaseTest {
+class SleepRepositoryTest {
 
-    @Mock
     private lateinit var sleepRepository: SleepRepository
-
-    private lateinit var getAllSleepsUseCase: GetAllSleepsUseCase
+    private lateinit var mockSleepDao: SleepDtoDao
 
     @Before
     fun setUp() {
-        MockitoAnnotations.initMocks(this) // Initializes mock objects
-        getAllSleepsUseCase = GetAllSleepsUseCase(sleepRepository)
-    }
-
-    @After
-    fun tearDown() {
-        Mockito.framework().clearInlineMocks() // Clean up after tests
+        mockSleepDao = mock(SleepDtoDao::class.java)
+        sleepRepository = SleepRepository(mockSleepDao)
     }
 
     @Test
-    fun `when repository returns sleeps, use case should return them`() = runBlocking {
-        // Arrange: Define the fake data to be returned by the repository
-        val fakeSleeps = listOf(
-            Sleep(
-                startTime = LocalDateTime.now().minusDays(1),
-                duration = 480,
-                quality = 4
-            ),
-            Sleep(
-                startTime = LocalDateTime.now().minusDays(2),
-                duration = 450,
-                quality = 3
-            ),
-            Sleep(
-                startTime = LocalDateTime.now().minusDays(2),
-                duration = 450,
-                quality = 3
-            )
+    fun `getAllSleeps should return list of sleeps`() = runTest {
+        // Arrange
+        val sleepDtoList = listOf(
+            SleepDto(1, 1633072800000, 480, 4),
+            SleepDto(2, 1633159200000, 360, 3)
+        )
+        val expectedSleepList = listOf(
+            Sleep(LocalDateTime.ofEpochSecond(1633072800, 0, ZoneOffset.UTC), 480, 4),
+            Sleep(LocalDateTime.ofEpochSecond(1633159200, 0, ZoneOffset.UTC), 360, 3)
         )
 
-        // Mocking the repository to return the fake data
-        Mockito.`when`(sleepRepository.getAllSleeps()).thenReturn(fakeSleeps)
+        `when`(mockSleepDao.getAllSleeps()).thenReturn(flowOf(sleepDtoList))
 
-        // Act: Call the use case's execute method
-        val result = getAllSleepsUseCase.execute()
+        // Act
+        val result = sleepRepository.getAllSleeps()
 
-        // Assert: Verify that the result is the same as the fake data
-        assertEquals(fakeSleeps.size, result.size)
-        for (i in fakeSleeps.indices) {
-            assertEquals(fakeSleeps[i].startTime, result[i].startTime)
-            assertEquals(fakeSleeps[i].duration, result[i].duration)
-            assertEquals(fakeSleeps[i].quality, result[i].quality)
-        }
+        // Assert
+        assertEquals(expectedSleepList, result)
+        verify(mockSleepDao).getAllSleeps()
     }
 
-    @Test
-    fun `when repository returns empty list, use case should return empty list`() = runBlocking {
-        // Arrange: Mock the repository to return an empty list
-        Mockito.`when`(sleepRepository.getAllSleeps()).thenReturn(emptyList())
+    @Test(expected = Exception::class)
+    fun `getAllSleeps should throw exception when dao throws exception`() = runTest {
+        // Arrange
+        `when`(mockSleepDao.getAllSleeps()).thenThrow(RuntimeException("Database error"))
 
-        // Act: Call the use case's execute method
-        val result = getAllSleepsUseCase.execute()
+        // Act
+        sleepRepository.getAllSleeps()
 
-        // Assert: Verify that the result is an empty list
-        assertTrue(result.isEmpty())
+        // Assert is handled by the expected exception
     }
 }

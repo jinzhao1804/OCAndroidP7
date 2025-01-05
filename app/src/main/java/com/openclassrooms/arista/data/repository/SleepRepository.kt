@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
-class SleepRepository @Inject constructor (private val sleepDao: SleepDtoDao) {
+open class SleepRepository @Inject constructor (private val sleepDao: SleepDtoDao) {
 
     suspend fun getAllSleeps(): List<Sleep> {
         return sleepDao.getAllSleeps()
