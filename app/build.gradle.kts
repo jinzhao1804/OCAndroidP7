@@ -75,6 +75,9 @@ dependencies {
 
 
     // Mockito for mocking objects
+
+    testImplementation ("net.bytebuddy:byte-buddy:1.14.9")
+
     testImplementation("org.mockito:mockito-core:4.2.0")
 
     testImplementation("io.mockk:mockk:1.13.4")

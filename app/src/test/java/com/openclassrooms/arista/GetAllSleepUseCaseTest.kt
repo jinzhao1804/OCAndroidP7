@@ -1,59 +1,70 @@
 package com.openclassrooms.arista
 
-import com.openclassrooms.arista.data.dao.SleepDtoDao
-import com.openclassrooms.arista.data.entity.SleepDto
 import com.openclassrooms.arista.data.repository.SleepRepository
 import com.openclassrooms.arista.domain.model.Sleep
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.runTest
+import com.openclassrooms.arista.domain.usecase.GetAllSleepsUseCase
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
+import org.mockito.Mock
 import org.mockito.Mockito.*
+import org.mockito.MockitoAnnotations
 import java.time.LocalDateTime
-import java.time.ZoneOffset
 
-class SleepRepositoryTest {
+class GetAllSleepsUseCaseTest {
 
-    private lateinit var sleepRepository: SleepRepository
-    private lateinit var mockSleepDao: SleepDtoDao
+    @Mock
+    private lateinit var mockSleepRepository: SleepRepository
+
+    private lateinit var getAllSleepsUseCase: GetAllSleepsUseCase
 
     @Before
     fun setUp() {
-        mockSleepDao = mock(SleepDtoDao::class.java)
-        sleepRepository = SleepRepository(mockSleepDao)
+        MockitoAnnotations.openMocks(this)
+        getAllSleepsUseCase = GetAllSleepsUseCase(mockSleepRepository)
     }
 
     @Test
-    fun `getAllSleeps should return list of sleeps`() = runTest {
+    fun `execute should return list of sleeps when repository succeeds`(): Unit = runBlocking {
         // Arrange
-        val sleepDtoList = listOf(
-            SleepDto(1, 1633072800000, 480, 4),
-            SleepDto(2, 1633159200000, 360, 3)
-        )
-        val expectedSleepList = listOf(
-            Sleep(LocalDateTime.ofEpochSecond(1633072800, 0, ZoneOffset.UTC), 480, 4),
-            Sleep(LocalDateTime.ofEpochSecond(1633159200, 0, ZoneOffset.UTC), 360, 3)
+        val sleepList = listOf(
+            Sleep(
+                startTime = LocalDateTime.of(2023, 10, 1, 22, 0),
+                duration = 480,
+                quality = 4
+            ),
+            Sleep(
+                startTime = LocalDateTime.of(2023, 10, 2, 23, 0),
+                duration = 360,
+                quality = 3
+            )
         )
 
-        `when`(mockSleepDao.getAllSleeps()).thenReturn(flowOf(sleepDtoList))
+        // Mock the repository to return the list of sleeps
+        `when`(mockSleepRepository.getAllSleeps()).thenReturn(sleepList)
 
         // Act
-        val result = sleepRepository.getAllSleeps()
+        val result = getAllSleepsUseCase.execute()
 
         // Assert
-        assertEquals(expectedSleepList, result)
-        verify(mockSleepDao).getAllSleeps()
+        assertEquals(sleepList, result)
+        verify(mockSleepRepository, times(1)).getAllSleeps()
     }
 
     @Test(expected = Exception::class)
-    fun `getAllSleeps should throw exception when dao throws exception`() = runTest {
+    fun `execute should throw exception when repository throws exception`(): Unit = runBlocking {
         // Arrange
-        `when`(mockSleepDao.getAllSleeps()).thenThrow(RuntimeException("Database error"))
+        val exceptionMessage = "Error fetching sleeps"
+        `when`(mockSleepRepository.getAllSleeps()).thenThrow(Exception(exceptionMessage))
 
         // Act
-        sleepRepository.getAllSleeps()
-
-        // Assert is handled by the expected exception
+        try {
+            getAllSleepsUseCase.execute()
+        } catch (e: Exception) {
+            // Assert
+            assertEquals(exceptionMessage, e.message)
+            throw e
+        }
     }
 }

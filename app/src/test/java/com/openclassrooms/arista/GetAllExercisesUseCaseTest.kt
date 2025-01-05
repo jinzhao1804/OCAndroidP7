@@ -1,76 +1,75 @@
 package com.openclassrooms.arista
 
-import com.openclassrooms.arista.data.dao.ExerciseDtoDao
-import com.openclassrooms.arista.data.entity.ExerciseDto
 import com.openclassrooms.arista.data.repository.ExerciseRepository
 import com.openclassrooms.arista.domain.model.Exercise
 import com.openclassrooms.arista.domain.model.ExerciseCategory
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.runTest
+import com.openclassrooms.arista.domain.usecase.GetAllExercisesUseCase
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
+import org.mockito.Mock
 import org.mockito.Mockito.*
-import org.mockito.kotlin.anyOrNull
+import org.mockito.MockitoAnnotations
 import java.time.LocalDateTime
-import java.time.ZoneOffset
 
 class GetAllExercisesUseCaseTest {
 
-    private lateinit var exerciseRepository: ExerciseRepository
-    private lateinit var mockExerciseDao: ExerciseDtoDao
+    @Mock
+    private lateinit var mockExerciseRepository: ExerciseRepository
+
+    private lateinit var getAllExercisesUseCase: GetAllExercisesUseCase
 
     @Before
     fun setUp() {
-        mockExerciseDao = mock(ExerciseDtoDao::class.java)
-        exerciseRepository = ExerciseRepository(mockExerciseDao)
+        MockitoAnnotations.openMocks(this)
+        getAllExercisesUseCase = GetAllExercisesUseCase(mockExerciseRepository)
     }
 
     @Test
-    fun `getAllExercises should return list of exercises`() = runTest {
+    fun `execute should return list of exercises when repository succeeds`(): Unit = runBlocking {
         // Arrange
-        val exerciseDtoList = listOf(
-            ExerciseDto(1, 1633072800000, 30, "Running", 5),
-            ExerciseDto(2, 1633159200000, 45, "Swimming", 7)
-        )
-        val expectedExerciseList = listOf(
+        val exerciseList = listOf(
             Exercise(
-                1,
-                LocalDateTime.ofEpochSecond(1633072800, 0, ZoneOffset.UTC),
-                30,
-                ExerciseCategory.Running,
-                5
+                id = 1,
+                startTime = LocalDateTime.of(2023, 10, 1, 10, 0),
+                duration = 30,
+                category = ExerciseCategory.Running,
+                intensity = 5
             ),
             Exercise(
-                2,
-                LocalDateTime.ofEpochSecond(1633159200, 0, ZoneOffset.UTC),
-                45,
-                ExerciseCategory.Swimming,
-                7
+                id = 2,
+                startTime = LocalDateTime.of(2023, 10, 2, 11, 0),
+                duration = 45,
+                category = ExerciseCategory.Running,
+                intensity = 7
             )
         )
 
-        `when`(mockExerciseDao.getAllExercises()).thenReturn(flowOf(exerciseDtoList))
+        // Mock the repository to return the list of exercises
+        `when`(mockExerciseRepository.getAllExercises()).thenReturn(exerciseList)
 
         // Act
-        val result = exerciseRepository.getAllExercises()
+        val result = getAllExercisesUseCase.execute()
 
         // Assert
-        assertEquals(expectedExerciseList, result)
-        verify(mockExerciseDao).getAllExercises()
+        assertEquals(exerciseList, result)
+        verify(mockExerciseRepository, times(1)).getAllExercises()
     }
 
     @Test(expected = Exception::class)
-    fun `getAllExercises should throw exception when dao throws exception`() = runTest {
+    fun `execute should throw exception when repository throws exception`(): Unit = runBlocking {
         // Arrange
-        `when`(mockExerciseDao.getAllExercises()).thenThrow(RuntimeException("Database error"))
+        val exceptionMessage = "Error fetching exercises"
+        `when`(mockExerciseRepository.getAllExercises()).thenThrow(Exception(exceptionMessage))
 
         // Act
-        exerciseRepository.getAllExercises()
-
-        // Assert is handled by the expected exception
+        try {
+            getAllExercisesUseCase.execute()
+        } catch (e: Exception) {
+            // Assert
+            assertEquals(exceptionMessage, e.message)
+            throw e
+        }
     }
-
-
-
 }

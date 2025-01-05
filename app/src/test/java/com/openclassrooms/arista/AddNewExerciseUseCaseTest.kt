@@ -1,72 +1,70 @@
-package com.openclassrooms.arista
+package com.openclassrooms.arista.domain.usecase
 
-import com.openclassrooms.arista.data.dao.ExerciseDtoDao
-import com.openclassrooms.arista.data.entity.ExerciseDto
 import com.openclassrooms.arista.data.repository.ExerciseRepository
 import com.openclassrooms.arista.domain.model.Exercise
 import com.openclassrooms.arista.domain.model.ExerciseCategory
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
+import org.mockito.Mock
 import org.mockito.Mockito.*
-import org.mockito.kotlin.anyOrNull
+import org.mockito.MockitoAnnotations
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 
 class AddNewExerciseUseCaseTest {
 
-    private lateinit var exerciseRepository: ExerciseRepository
-    private lateinit var mockExerciseDao: ExerciseDtoDao
+    @Mock
+    private lateinit var mockExerciseRepository: ExerciseRepository
+
+    private lateinit var addNewExerciseUseCase: AddNewExerciseUseCase
 
     @Before
     fun setUp() {
-        mockExerciseDao = mock(ExerciseDtoDao::class.java)
-        exerciseRepository = ExerciseRepository(mockExerciseDao)
+        MockitoAnnotations.openMocks(this)
+        addNewExerciseUseCase = AddNewExerciseUseCase(mockExerciseRepository)
     }
 
-
-
     @Test
-    fun `addExercise should call dao insertExercise`() = runTest {
+    fun `execute should call addExercise on repository`() = runBlocking {
         // Arrange
-        val startTime = LocalDateTime.now()
         val exercise = Exercise(
-            id = 1,
-            startTime = startTime,
+            id = null,
+            startTime = LocalDateTime.of(2023, 10, 1, 10, 0),
             duration = 30,
             category = ExerciseCategory.Running,
             intensity = 5
         )
-        val exerciseDto = ExerciseDto(
-            id = 1,
-            startTime = startTime.toEpochSecond(ZoneOffset.UTC) * 1000, // Convert to milliseconds
-            duration = 30,
-            category = "Running",
-            intensity = 5
-        )
-
-        // Mock the DAO to return a value when insertExercise is called
-        `when`(mockExerciseDao.insertExercise(anyOrNull())).thenReturn(1L) // Assuming it returns a Long
 
         // Act
-        exerciseRepository.addExercise(exercise)
+        addNewExerciseUseCase.execute(exercise)
 
         // Assert
-        verify(mockExerciseDao).insertExercise(exerciseDto)
+        verify(mockExerciseRepository, times(1)).addExercise(exercise)
     }
 
     @Test(expected = Exception::class)
-    fun `addExercise should throw exception when dao throws exception`() = runTest {
+    fun `execute should throw exception when repository throws exception`() = runBlocking {
         // Arrange
-        val exercise = Exercise(null, LocalDateTime.now(), 30, ExerciseCategory.Running, 5)
-        `when`(mockExerciseDao.insertExercise(any())).thenThrow(RuntimeException("Database error"))
+        val exercise = Exercise(
+            id = null,
+            startTime = LocalDateTime.of(2023, 10, 1, 10, 0),
+            duration = 30,
+            category = ExerciseCategory.Running,
+            intensity = 5
+        )
+
+        val exceptionMessage = "Failed to add exercise"
+        doThrow(Exception(exceptionMessage)).`when`(mockExerciseRepository).addExercise(exercise)
 
         // Act
-        exerciseRepository.addExercise(exercise)
-
-        // Assert is handled by the expected exception
+        try {
+            addNewExerciseUseCase.execute(exercise)
+        } catch (e: Exception) {
+            // Assert
+            assertEquals(exceptionMessage, e.message)
+            throw e
+        }
     }
-
 }
