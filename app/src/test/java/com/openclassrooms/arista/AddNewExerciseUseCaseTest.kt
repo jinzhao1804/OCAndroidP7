@@ -15,7 +15,7 @@ import org.mockito.kotlin.anyOrNull
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 
-class ExerciseRepositoryTest {
+class AddNewExerciseUseCaseTest {
 
     private lateinit var exerciseRepository: ExerciseRepository
     private lateinit var mockExerciseDao: ExerciseDtoDao
@@ -26,38 +26,7 @@ class ExerciseRepositoryTest {
         exerciseRepository = ExerciseRepository(mockExerciseDao)
     }
 
-    @Test
-    fun `getAllExercises should return list of exercises`() = runTest {
-        // Arrange
-        val exerciseDtoList = listOf(
-            ExerciseDto(1, 1633072800000, 30, "Running", 5),
-            ExerciseDto(2, 1633159200000, 45, "Swimming", 7)
-        )
-        val expectedExerciseList = listOf(
-            Exercise(1, LocalDateTime.ofEpochSecond(1633072800, 0, ZoneOffset.UTC), 30, ExerciseCategory.Running, 5),
-            Exercise(2, LocalDateTime.ofEpochSecond(1633159200, 0, ZoneOffset.UTC), 45, ExerciseCategory.Swimming, 7)
-        )
 
-        `when`(mockExerciseDao.getAllExercises()).thenReturn(flowOf(exerciseDtoList))
-
-        // Act
-        val result = exerciseRepository.getAllExercises()
-
-        // Assert
-        assertEquals(expectedExerciseList, result)
-        verify(mockExerciseDao).getAllExercises()
-    }
-
-    @Test(expected = Exception::class)
-    fun `getAllExercises should throw exception when dao throws exception`() = runTest {
-        // Arrange
-        `when`(mockExerciseDao.getAllExercises()).thenThrow(RuntimeException("Database error"))
-
-        // Act
-        exerciseRepository.getAllExercises()
-
-        // Assert is handled by the expected exception
-    }
 
     @Test
     fun `addExercise should call dao insertExercise`() = runTest {
@@ -100,38 +69,4 @@ class ExerciseRepositoryTest {
         // Assert is handled by the expected exception
     }
 
-    @Test
-    fun `deleteExercise should call dao deleteExerciseById`() = runTest {
-        // Arrange
-        val exercise = Exercise(1, LocalDateTime.now(), 30, ExerciseCategory.Running, 5)
-
-        // Act
-        exerciseRepository.deleteExercise(exercise)
-
-        // Assert
-        verify(mockExerciseDao).deleteExerciseById(1)
-    }
-
-    @Test(expected = Exception::class)
-    fun `deleteExercise should throw exception when exercise id is null`() = runTest {
-        // Arrange
-        val exercise = Exercise(null, LocalDateTime.now(), 30, ExerciseCategory.Running, 5)
-
-        // Act
-        exerciseRepository.deleteExercise(exercise)
-
-        // Assert is handled by the expected exception
-    }
-
-    @Test(expected = Exception::class)
-    fun `deleteExercise should throw exception when dao throws exception`() = runTest {
-        // Arrange
-        val exercise = Exercise(1, LocalDateTime.now(), 30, ExerciseCategory.Running, 5)
-        `when`(mockExerciseDao.deleteExerciseById(any())).thenThrow(RuntimeException("Database error"))
-
-        // Act
-        exerciseRepository.deleteExercise(exercise)
-
-        // Assert is handled by the expected exception
-    }
 }

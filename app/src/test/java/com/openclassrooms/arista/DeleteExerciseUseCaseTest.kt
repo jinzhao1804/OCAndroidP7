@@ -1,79 +1,65 @@
 package com.openclassrooms.arista
 
+import com.openclassrooms.arista.data.dao.ExerciseDtoDao
+import com.openclassrooms.arista.data.entity.ExerciseDto
+import com.openclassrooms.arista.data.repository.ExerciseRepository
 import com.openclassrooms.arista.domain.model.Exercise
 import com.openclassrooms.arista.domain.model.ExerciseCategory
-import com.openclassrooms.arista.domain.usecase.DeleteExerciseUseCase
-import com.openclassrooms.arista.data.repository.ExerciseRepository
-import kotlinx.coroutines.runBlocking
-import org.junit.After
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.mockito.Mock
-import org.mockito.Mockito
-import org.mockito.MockitoAnnotations
-import org.junit.Assert.*
-import org.mockito.junit.MockitoJUnitRunner
+import org.mockito.Mockito.*
+import org.mockito.kotlin.anyOrNull
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 
-@RunWith(MockitoJUnitRunner::class)
 class DeleteExerciseUseCaseTest {
 
-    @Mock
     private lateinit var exerciseRepository: ExerciseRepository
-
-    private lateinit var deleteExerciseUseCase: DeleteExerciseUseCase
+    private lateinit var mockExerciseDao: ExerciseDtoDao
 
     @Before
     fun setUp() {
-        MockitoAnnotations.initMocks(this)  // Initializes mock objects
-        deleteExerciseUseCase = DeleteExerciseUseCase(exerciseRepository)
+        mockExerciseDao = mock(ExerciseDtoDao::class.java)
+        exerciseRepository = ExerciseRepository(mockExerciseDao)
     }
 
-    @After
-    fun tearDown() {
-        Mockito.framework().clearInlineMocks()  // Clean up after tests
-    }
+
 
     @Test
-    fun `when execute is called, repository should delete exercise`() = runBlocking {
-        // Arrange: Prepare the exercise data
-        val exercise = Exercise(
-            id = 1L,
-            startTime = java.time.LocalDateTime.now(),
-            duration = 30,
-            category = ExerciseCategory.Running,
-            intensity = 5
-        )
+    fun `deleteExercise should call dao deleteExerciseById`() = runTest {
+        // Arrange
+        val exercise = Exercise(1, LocalDateTime.now(), 30, ExerciseCategory.Running, 5)
 
-        // Act: Call the use case's execute method
-        deleteExerciseUseCase.execute(exercise)
+        // Act
+        exerciseRepository.deleteExercise(exercise)
 
-        // Assert: Verify that deleteExercise was called with the correct exercise
-        Mockito.verify(exerciseRepository).deleteExercise(exercise)  // Verify that deleteExercise was called with the correct exercise
+        // Assert
+        verify(mockExerciseDao).deleteExerciseById(1)
     }
 
-    @Test
-    fun `when delete exercise fails, use case should handle error`() = runBlocking {
-        // Arrange: Prepare the exercise data
-        val exercise = Exercise(
-            id = 1L,
-            startTime = java.time.LocalDateTime.now(),
-            duration = 30,
-            category = ExerciseCategory.Running,
-            intensity = 5
-        )
+    @Test(expected = Exception::class)
+    fun `deleteExercise should throw exception when exercise id is null`() = runTest {
+        // Arrange
+        val exercise = Exercise(null, LocalDateTime.now(), 30, ExerciseCategory.Running, 5)
 
-        // Mock the repository to throw an exception when deleteExercise is called
-        Mockito.`when`(exerciseRepository.deleteExercise(exercise)).thenThrow(RuntimeException("Failed to delete exercise"))
+        // Act
+        exerciseRepository.deleteExercise(exercise)
 
-        try {
-            // Act: Call the use case's execute method, which should throw an exception
-            deleteExerciseUseCase.execute(exercise)
-            fail("Exception was expected, but it was not thrown.")
-        } catch (e: Exception) {
-            // Assert: Verify that the exception is correctly handled
-            assertTrue(e is RuntimeException)
-            assertEquals("Failed to delete exercise", e.message)
-        }
+        // Assert is handled by the expected exception
+    }
+
+    @Test(expected = Exception::class)
+    fun `deleteExercise should throw exception when dao throws exception`() = runTest {
+        // Arrange
+        val exercise = Exercise(1, LocalDateTime.now(), 30, ExerciseCategory.Running, 5)
+        `when`(mockExerciseDao.deleteExerciseById(any())).thenThrow(RuntimeException("Database error"))
+
+        // Act
+        exerciseRepository.deleteExercise(exercise)
+
+        // Assert is handled by the expected exception
     }
 }

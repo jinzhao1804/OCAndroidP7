@@ -1,76 +1,76 @@
 package com.openclassrooms.arista
 
-
+import com.openclassrooms.arista.data.dao.ExerciseDtoDao
+import com.openclassrooms.arista.data.entity.ExerciseDto
+import com.openclassrooms.arista.data.repository.ExerciseRepository
 import com.openclassrooms.arista.domain.model.Exercise
 import com.openclassrooms.arista.domain.model.ExerciseCategory
-import com.openclassrooms.arista.data.repository.ExerciseRepository
-import com.openclassrooms.arista.domain.usecase.GetAllExercisesUseCase
-import kotlinx.coroutines.runBlocking
-import org.junit.After
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.mockito.Mock
-import org.mockito.Mockito
-import org.mockito.MockitoAnnotations
-import org.junit.Assert.*
-import org.mockito.junit.MockitoJUnitRunner
+import org.mockito.Mockito.*
+import org.mockito.kotlin.anyOrNull
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 
-@RunWith(MockitoJUnitRunner::class) // This is the annotation to run with JUnit4 and use Mockito
 class GetAllExercisesUseCaseTest {
 
-    @Mock
     private lateinit var exerciseRepository: ExerciseRepository
-
-    private lateinit var getAllExercisesUseCase: GetAllExercisesUseCase
+    private lateinit var mockExerciseDao: ExerciseDtoDao
 
     @Before
     fun setUp() {
-        MockitoAnnotations.initMocks(this) // Initializes mock objects
-        getAllExercisesUseCase = GetAllExercisesUseCase(exerciseRepository)
-    }
-
-    @After
-    fun tearDown() {
-        Mockito.framework().clearInlineMocks() // Clean up after tests
+        mockExerciseDao = mock(ExerciseDtoDao::class.java)
+        exerciseRepository = ExerciseRepository(mockExerciseDao)
     }
 
     @Test
-    fun `when repository returns exercises, use case should return them`() = runBlocking {
-        // Arrange: Define the fake data to be returned by the repository
-        val fakeExercises = listOf(
+    fun `getAllExercises should return list of exercises`() = runTest {
+        // Arrange
+        val exerciseDtoList = listOf(
+            ExerciseDto(1, 1633072800000, 30, "Running", 5),
+            ExerciseDto(2, 1633159200000, 45, "Swimming", 7)
+        )
+        val expectedExerciseList = listOf(
             Exercise(
-                startTime = java.time.LocalDateTime.now(),
-                duration = 30,
-                category = ExerciseCategory.Running,
-                intensity = 5
+                1,
+                LocalDateTime.ofEpochSecond(1633072800, 0, ZoneOffset.UTC),
+                30,
+                ExerciseCategory.Running,
+                5
             ),
             Exercise(
-                startTime = java.time.LocalDateTime.now().plusHours(1),
-                duration = 45,
-                category = ExerciseCategory.Riding,
-                intensity = 7
+                2,
+                LocalDateTime.ofEpochSecond(1633159200, 0, ZoneOffset.UTC),
+                45,
+                ExerciseCategory.Swimming,
+                7
             )
         )
-        // Mocking the repository to return the fake data
-        Mockito.`when`(exerciseRepository.getAllExercises()).thenReturn(fakeExercises)
 
-        // Act: Call the use case's execute method
-        val result = getAllExercisesUseCase.execute()
+        `when`(mockExerciseDao.getAllExercises()).thenReturn(flowOf(exerciseDtoList))
 
-        // Assert: Verify that the result is the same as the fake data
-        assertEquals(fakeExercises, result)
+        // Act
+        val result = exerciseRepository.getAllExercises()
+
+        // Assert
+        assertEquals(expectedExerciseList, result)
+        verify(mockExerciseDao).getAllExercises()
     }
 
-    @Test
-    fun `when repository returns empty list, use case should return empty list`() = runBlocking {
-        // Arrange: Mock the repository to return an empty list
-        Mockito.`when`(exerciseRepository.getAllExercises()).thenReturn(emptyList())
+    @Test(expected = Exception::class)
+    fun `getAllExercises should throw exception when dao throws exception`() = runTest {
+        // Arrange
+        `when`(mockExerciseDao.getAllExercises()).thenThrow(RuntimeException("Database error"))
 
-        // Act: Call the use case's execute method
-        val result = getAllExercisesUseCase.execute()
+        // Act
+        exerciseRepository.getAllExercises()
 
-        // Assert: Verify that the result is an empty list
-        assertTrue(result.isEmpty())
+        // Assert is handled by the expected exception
     }
+
+
+
 }
