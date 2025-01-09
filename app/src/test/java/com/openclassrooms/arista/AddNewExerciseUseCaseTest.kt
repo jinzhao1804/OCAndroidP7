@@ -1,8 +1,9 @@
-package com.openclassrooms.arista.domain.usecase
+package com.openclassrooms.arista
 
 import com.openclassrooms.arista.data.repository.ExerciseRepository
 import com.openclassrooms.arista.domain.model.Exercise
 import com.openclassrooms.arista.domain.model.ExerciseCategory
+import com.openclassrooms.arista.domain.usecase.AddNewExerciseUseCase
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -11,7 +12,6 @@ import org.mockito.Mock
 import org.mockito.Mockito.*
 import org.mockito.MockitoAnnotations
 import java.time.LocalDateTime
-import java.time.ZoneOffset
 
 class AddNewExerciseUseCaseTest {
 

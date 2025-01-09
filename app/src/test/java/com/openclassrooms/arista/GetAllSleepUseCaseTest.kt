@@ -3,6 +3,7 @@ package com.openclassrooms.arista
 import com.openclassrooms.arista.data.repository.SleepRepository
 import com.openclassrooms.arista.domain.model.Sleep
 import com.openclassrooms.arista.domain.usecase.GetAllSleepsUseCase
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -42,7 +43,7 @@ class GetAllSleepsUseCaseTest {
         )
 
         // Mock the repository to return the list of sleeps
-        `when`(mockSleepRepository.getAllSleeps()).thenReturn(sleepList)
+        `when`(mockSleepRepository.getAllSleeps()).thenReturn(flowOf(sleepList))
 
         // Act
         val result = getAllSleepsUseCase.execute()

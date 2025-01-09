@@ -1,9 +1,8 @@
-package com.openclassrooms.arista.data
+package com.openclassrooms.arista.data.database
 
 import androidx.room.TypeConverter
 import java.time.LocalDateTime
 import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
 
 class Converters {
 
