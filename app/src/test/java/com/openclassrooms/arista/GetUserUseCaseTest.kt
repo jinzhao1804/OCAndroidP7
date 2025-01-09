@@ -2,7 +2,7 @@ package com.openclassrooms.arista
 
 import com.openclassrooms.arista.data.entity.UserDto
 import com.openclassrooms.arista.data.repository.UserRepository
-import com.openclassrooms.arista.domain.usecase.GetUserUsecase
+import com.openclassrooms.arista.domain.usecase.GetUserUseCase
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
@@ -13,17 +13,17 @@ import org.mockito.Mock
 import org.mockito.Mockito.*
 import org.mockito.MockitoAnnotations
 
-class GetUserUsecaseTest {
+class GetUserUseCaseTest {
 
     @Mock
     private lateinit var mockUserRepository: UserRepository
 
-    private lateinit var getUserUsecase: GetUserUsecase
+    private lateinit var getUserUseCase: GetUserUseCase
 
     @Before
     fun setUp() {
         MockitoAnnotations.openMocks(this)
-        getUserUsecase = GetUserUsecase(mockUserRepository)
+        getUserUseCase = GetUserUseCase(mockUserRepository)
     }
 
     @Test
@@ -40,7 +40,7 @@ class GetUserUsecaseTest {
         `when`(mockUserRepository.getUser()).thenReturn(userFlow)
 
         // Act
-        val result = getUserUsecase.execute().toList()
+        val result = getUserUseCase.execute().toList()
 
         // Assert
         assertEquals(listOf(userDto), result)
@@ -55,7 +55,7 @@ class GetUserUsecaseTest {
 
         // Act
         try {
-            getUserUsecase.execute().toList()
+            getUserUseCase.execute().toList()
         } catch (e: Exception) {
             // Assert
             assertEquals(exceptionMessage, e.message)

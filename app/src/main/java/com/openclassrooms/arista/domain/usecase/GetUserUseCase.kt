@@ -5,7 +5,7 @@ import com.openclassrooms.arista.data.repository.UserRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
-class GetUserUsecase @Inject constructor(private val userRepository: UserRepository) {
+class GetUserUseCase @Inject constructor(private val userRepository: UserRepository) {
 
     suspend fun execute(): Flow<UserDto> {
         return try {
